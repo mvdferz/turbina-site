@@ -290,7 +290,7 @@ footer b{color:var(--hot)}
 </div>
 
 <script>
-/* ═══ ПРЕЛОАДЕР: железная гарантия — убирается за 700 мс всегда ═══ */
+/* ═══ ПРЕЛОАДЕР: убирается за 700 мс всегда ═══ */
 (function(){
   var l=document.getElementById('loader');
   function kill(){
@@ -321,34 +321,25 @@ function copyIP(){
   }
 }
 
-/* ═══ ЖИВОЙ ОНЛАЙН: 3 прокси по очереди ═══ */
-var SB='https://turbina-turista-25.myarena.site/sb/index.php?xajax=ServerHostPlayers&xajaxargs[]=1&xajaxargs[]=servers&xajaxargs[]=0&xajaxargs[]=-1&xajaxargs[]=1&xajaxargs[]=70&xajaxr=1';
-var PROXIES=[
-  function(){return fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(SB)).then(function(r){if(!r.ok)throw 0;return r.text()})},
-  function(){return fetch('https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(SB)).then(function(r){if(!r.ok)throw 0;return r.text()})},
-  function(){return fetch('https://r.jina.ai/'+SB).then(function(r){if(!r.ok)throw 0;return r.text()})}
-];
+/* ═══ ЖИВОЙ ОНЛАЙН через Cloudflare Worker ═══ */
+var WORKER='https://turbina-online.maznatskijerzan.workers.dev/';
 function setOnline(p,m,map){
   var b=document.getElementById('onlineBig');if(b)b.innerHTML=p+'<i>/'+m+'</i>';
   var ms=document.getElementById('msOnline');if(ms)ms.innerHTML=p+'<em>/'+m+'</em>';
   var g=document.getElementById('gaugeBar');if(g)g.style.width=Math.max(Math.min(p/m*100,100),2)+'%';
   var c=document.getElementById('onlineCap');if(c)c.innerHTML='Работает 24/7<br>Карта: '+(map||'—');
 }
-function parseAndShow(txt){
-  var pm=txt.match(/(\d{1,3})\s*\/\s*(\d{1,3})/);if(!pm)return false;
-  var mm=txt.match(/de_[a-z0-9_]+|[a-z]{2,6}_[a-z0-9_]{3,}/i);
-  setOnline(parseInt(pm[1],10),parseInt(pm[2],10),mm?mm[0]:null);
-  return true;
-}
 function loadOnline(){
-  var i=0;
-  function next(){
-    if(i>=PROXIES.length)return;
-    PROXIES[i++]()
-      .then(function(txt){if(!parseAndShow(txt))next();})
-      .catch(next);
-  }
-  next();
+  fetch(WORKER)
+    .then(function(r){return r.text()})
+    .then(function(txt){
+      var pm=txt.match(/CDATA\[([0-9]{1,3})\/([0-9]{1,3})\]\]/);
+      if(!pm){pm=txt.match(/(\d{1,3})\s*\/\s*(\d{1,3})/);}
+      if(!pm)return;
+      var mm=txt.match(/CDATA\[(de_[a-z0-9_]+|[a-z]{2,6}_[a-z0-9_]{3,})\]\]/i);
+      setOnline(parseInt(pm[1],10),parseInt(pm[2],10),mm?mm[1]:null);
+    })
+    .catch(function(e){console.log('[ONLINE] ошибка:',e)});
 }
 loadOnline();
 setInterval(loadOnline,60000);
