@@ -63,7 +63,7 @@ body::before{
 .rings i:nth-child(4){width:84%;height:84%;animation:spin 140s linear infinite reverse}
 @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 
-/* слой 4 — боковые вертикальные линии + деления (как на турбине) */
+/* слой 4 — боковые вертикальные линии + деления */
 .sides{
   position:fixed;inset:0;z-index:-4;pointer-events:none;
   display:flex;justify-content:space-between;padding:0 3vw;
@@ -76,7 +76,7 @@ body::before{
   position:absolute;left:0;width:10px;height:1px;background:rgba(255,154,60,.3);
 }
 
-/* слой 5 — парящие угольки/частицы */
+/* слой 5 — парящие угольки */
 .embers{position:fixed;inset:0;z-index:-3;pointer-events:none;overflow:hidden}
 .embers i{
   position:absolute;bottom:-10px;border-radius:50%;
@@ -90,7 +90,7 @@ body::before{
   100%{transform:translateY(-108vh) translateX(-18px);opacity:0}
 }
 
-/* слой 6 — ЖИДКОЕ СТЕКЛО: переливающиеся блобы, реагируют на скролл */
+/* слой 6 — ЖИДКОЕ СТЕКЛО: блобы от скролла */
 .blob-field{position:fixed;inset:0;z-index:-2;pointer-events:none;filter:blur(46px);opacity:.85}
 .blob{
   position:absolute;border-radius:50%;
@@ -169,14 +169,12 @@ h1 em{
 .ip-block{
   margin:36px 0 0;border:1px solid rgba(255,77,0,.4);
   padding:30px 24px;cursor:pointer;position:relative;transition:.25s;
-  /* жидкое стекло */
   background:linear-gradient(135deg, rgba(255,77,0,.09), rgba(255,255,255,.03) 40%, rgba(255,154,60,.05));
   backdrop-filter:blur(14px) saturate(1.5);
   -webkit-backdrop-filter:blur(14px) saturate(1.5);
   box-shadow:inset 0 1px 0 rgba(255,220,190,.15), inset 0 -1px 0 rgba(0,0,0,.3), 0 12px 40px rgba(0,0,0,.35);
   border-radius:2px;overflow:hidden;
 }
-/* блик-полоса, ползёт при наведении */
 .ip-block::before{
   content:'';position:absolute;top:0;left:-40%;width:40%;height:100%;
   background:linear-gradient(105deg, transparent, rgba(255,220,180,.14), transparent);
@@ -214,7 +212,6 @@ h1 em{
   font-size:13.5px;transition:.25s;border-radius:2px;
 }
 .feat-list li:hover{
-  /* стеклянная подсветка строки при наведении */
   background:linear-gradient(90deg, rgba(255,77,0,.08), rgba(255,255,255,.02) 60%, transparent);
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   padding-left:22px;
@@ -320,14 +317,6 @@ footer{
 }
 footer b{color:var(--hot)}
 
-.toast{
-  position:fixed;bottom:28px;left:50%;transform:translate(-50%,80px);z-index:100;
-  background:var(--bone);color:#000;font-weight:800;font-size:12px;
-  letter-spacing:.18em;padding:12px 26px;text-transform:uppercase;
-  transition:.35s;pointer-events:none;
-}
-.toast.show{transform:translate(-50%,0)}
-
 @media(max-width:600px){
   .hero{padding-top:52px}
   .online-big{font-size:44px}
@@ -383,8 +372,8 @@ footer b{color:var(--hot)}
   <section class="sec">
     <div class="sec-head"><span class="sec-num">01</span><span class="sec-title">Сейчас на сервере</span></div>
     <div class="online-row">
-      <div class="online-big" id="onlineBig">21<i>/64</i></div>
-      <div class="online-cap" id="onlineCap">Работает 24/7<br>Карта: de_dust2</div>
+      <div class="online-big" id="onlineBig">—<i>/64</i></div>
+      <div class="online-cap" id="onlineCap">Работает 24/7<br>Карта: ...</div>
     </div>
     <div class="gauge"><i id="gaugeBar"></i></div>
   </section>
@@ -469,11 +458,11 @@ footer b{color:var(--hot)}
 
 </div>
 
-<div class="toast" id="toast"></div>
-
 <script>
 const IP='46.174.50.240:27015';
+const MAX_PLAYERS=64;
 
+/* ── копирование IP ── */
 function showCopied(){
   const c=document.getElementById('copied');
   c.classList.add('show');
@@ -487,53 +476,58 @@ function copyIP(){
      i.remove();showCopied();});
 }
 
-/* анимация онлайна (если API недоступно — показываем запасное значение) */
+/* ═══ ЖИВОЙ ОНЛАЙН через твой SourceBans ═══ */
 function setOnline(players,max){
   document.getElementById('onlineBig').innerHTML=`players<i>/{players}<i>/players<i>/{max}</i>`;
-  document.getElementById('gaugeBar').style.width=(players/max*100)+'%';
+  document.getElementById('gaugeBar').style.width=Math.min(players/max*100,100)+'%';
 }
-setTimeout(()=>setOnline(21,64),500);
 
-/* ═══ ЖИВОЙ ОНЛАЙН через мониторинг gamemonitoring ═══ */
 async function loadOnline(){
+  const sb='https://turbina-turista-25.myarena.site/sb/index.php?p=servers';
   try{
-    const r=await fetch('https://api.gamemonitoring.ru/servers/'+IP);
-    const d=await r.json();
-    if(d&&d.response){
-      setOnline(d.response.players,d.response.maxplayers);
-      const map=document.getElementById('onlineCap');
-      if(d.response.map)map.innerHTML='Работает 24/7<br>Карта: '+d.response.map;
-    }
-  }catch(e){/* тихо оставляем запасное значение */}
+    /* пробуем сначала gamemonitoring (быстрый JSON) */
+    try{
+      const r=await fetch('https://api.gamemonitoring.ru/servers/'+IP);
+      const d=await r.json();
+      if(d&&d.response&&typeof d.response.players==='number'){
+        setOnline(d.response.players,d.response.maxplayers||MAX_PLAYERS);
+        if(d.response.map)document.getElementById('onlineCap').innerHTML='Работает 24/7<br>Карта: '+d.response.map;
+        return;
+      }
+    }catch(e){/* переходим к SourceBans */}
+
+    /* вариант 2 — парсим страницу SourceBans через CORS-прокси */
+    const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(sb));
+    const html=await r.text();
+    let m=html.match(/(\d+)\s*\/\s*(\d+)/);
+    if(m)setOnline(+m[1],+m[2]);
+  }catch(e){/* сеть недоступна — остаётся прочерк */}
 }
 loadOnline();
 setInterval(loadOnline,60000);
 
-/* параллакс заголовка за курсором (только десктоп) */
+/* параллакс заголовка за курсором */
 addEventListener('mousemove',e=>{
   const h=document.querySelector('h1');
   if(!h||innerWidth<600)return;
-  const x=(e.clientX/innerWidth-.5)*8,y=(e.clientY/innerHeight-.5)*6;
-  h.style.transform=`translate(xpx,{x}px,xpx,{y}px)`;
+  h.style.transform=`translate((e.clientX/innerWidth−.5)∗8px,{(e.clientX/innerWidth-.5)*8}px,(e.clientX/innerWidth−.5)∗8px,{(e.clientY/innerHeight-.5)*6}px)`;
 });
 
-/* ═══ ЖИДКОЕ СТЕКЛО: блобы текут и переливаются от скролла ═══ */
+/* ═══ ЖИДКОЕ СТЕКЛО от скролла ═══ */
 const blobs=[...document.querySelectorAll('.blob')];
-const blobField=document.getElementById('blobField');
 let scrollT=0,tick=false;
 
 function updateBlobs(){
-  const p=scrollT/Math.max(document.body.scrollHeight-innerHeight,1); // 0..1
+  const p=scrollT/Math.max(document.body.scrollHeight-innerHeight,1);
   blobs.forEach((b,i)=>{
     const dir=i%2?1:-1;
     const drift=Math.sin(p*Math.PI*2+i*1.7)*90*dir;
     const rise=p*(i%2?-260:300);
     const sway=Math.cos(p*Math.PI*4+i)*40;
-    const hueShift=Math.sin(p*Math.PI*3+i)*30; // перелив оттенков
+    const hueShift=Math.sin(p*Math.PI*3+i)*30;
     b.style.transform=`translate(drift+swaypx,{drift+sway}px,drift+swaypx,{rise}px) scale(${1+p*.25*Math.sin(i)})`;
     b.style.filter=`hue-rotate(hueShiftdeg)saturate({hueShift}deg) saturate(hueShiftdeg)saturate({1.1+p*.6})`;
   });
-  // сетка слегка уплывает вниз — эффект глубины
   document.querySelector('.grid-bg').style.backgroundPosition=
     `0 scrollT∗.15px,{scrollT*.15}px,scrollT∗.15px,{scrollT*.15}px 0`;
   tick=false;
@@ -543,7 +537,7 @@ addEventListener('scroll',()=>{
   if(!tick){requestAnimationFrame(updateBlobs);tick=true;}
 },{passive:true});
 
-/* генерация угольков на фоне */
+/* угольки на фоне */
 (function spawnEmbers(){
   const c=document.createElement('div');c.className='embers';
   for(let i=0;i<26;i++){
