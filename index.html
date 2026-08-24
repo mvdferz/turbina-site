@@ -1,260 +1,183 @@
-Вот полностью переработанный и проверенный код. Что я исправил и защитил заранее:
-
-✅ **Прелоадер** — скрывается всегда: по загрузке + принудительно через 3 сек (страховка от вечной загрузки)
-✅ **Онлайн** — парсер `players_1` с таймаутом fetch (AbortController), заглушка если прокси лежит
-✅ **Все `getElementById` защищены проверками** — нет падений на отсутствующих элементах
-✅ **try/catch вокруг всего JS-блока** — одна ошибка не ломает остальные эффекты
-✅ **Копирование IP** — работает даже в старых браузерах и HTTP
-✅ **Reveal-анимации** — если IntersectionObserver недоступен, контент просто показывается сразу
-✅ Файл заканчивается корректно — никаких обрезков
-
-Копируй целиком, заменяй весь файл:
-
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>[v34] TURBINA TURISTA [Public] 18+</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;800&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-:root{--hot:#ff4d00;--ember:#ff9a3c;--bone:#efe6da;--dim:#8f7f6f;--mx:50%;--my:0%;--glow:0}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:none}
+:root{--hot:#ff4d00;--ember:#ff9a3c;--bone:#efe6da;--dim:#8f7f6f}
+*{margin:0;padding:0;box-sizing:border-box}
 ::selection{background:var(--hot);color:#000}
-html{scroll-behavior:smooth}
 body{font-family:'Manrope',sans-serif;color:var(--bone);overflow-x:hidden;line-height:1.6;background:#0a0503}
 
-/* ═══ ПРЕЛОАДЕР ═══ */
-#loader{position:fixed;inset:0;z-index:999;background:#0a0503;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
-  transition:opacity .6s,visibility .6s}
-#loader.done{opacity:0!important;visibility:hidden!important}
+/* прелоадер */
+#loader{position:fixed;inset:0;z-index:999;background:#0a0503;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;transition:opacity .6s,visibility .6s}
+#loader.done{opacity:0;visibility:hidden;pointer-events:none}
 #loader .lg{font-family:'Unbounded';font-weight:800;font-size:clamp(20px,5vw,34px);
-  letter-spacing:.06em;text-transform:uppercase;color:var(--bone)}
+  text-transform:uppercase;color:var(--bone)}
 #loader .lg em{font-style:normal;color:var(--hot);text-shadow:0 0 26px rgba(255,77,0,.6)}
 #loader .bar{width:min(280px,70vw);height:2px;background:rgba(232,221,208,.12);overflow:hidden;border-radius:4px}
-#loader .bar i{display:block;height:100%;width:40%;
-  background:linear-gradient(90deg,var(--hot),var(--ember));
+#loader .bar i{display:block;height:100%;width:40%;background:linear-gradient(90deg,var(--hot),var(--ember));
   box-shadow:0 0 14px var(--hot);animation:ld 1s ease-in-out infinite}
-@keyframes ld{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
-#loader .st{font-family:'Unbounded';font-weight:300;font-size:9px;letter-spacing:.4em;color:var(--dim);text-transform:uppercase}
+@keyframes ld{to{transform:translateX(320%)}}
 
-/* ═══ ФОН ═══ */
+/* фон */
 .sky{position:fixed;inset:0;z-index:-7;pointer-events:none;background:
   radial-gradient(ellipse 90% 55% at 50% 108%,rgba(255,60,0,.30),transparent 62%),
-  radial-gradient(ellipse 70% 40% at 85% -5%,rgba(120,50,255,.10),transparent 60%),
   linear-gradient(180deg,#170a04,#100704 45%,#080302)}
 .grid-floor{position:fixed;left:-20%;right:-20%;bottom:-6%;height:52vh;z-index:-6;opacity:.35;pointer-events:none;
   background-image:linear-gradient(rgba(255,77,0,.22) 1px,transparent 1px),
     linear-gradient(90deg,rgba(255,77,0,.22) 1px,transparent 1px);
   background-size:56px 56px;transform:perspective(420px) rotateX(58deg);transform-origin:center bottom;
   animation:gmove 14s linear infinite;
-  mask-image:linear-gradient(180deg,transparent,#000 35%);
-  -webkit-mask-image:linear-gradient(180deg,transparent,#000 35%)}
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 35%);
+  mask-image:linear-gradient(180deg,transparent,#000 35%)}
 @keyframes gmove{to{background-position:0 56px}}
-.blobs{position:fixed;inset:0;z-index:-4;filter:blur(60px);mix-blend-mode:screen;pointer-events:none}
-.blob{position:absolute;border-radius:50%;will-change:transform}
-.b1{width:46vmax;height:46vmax;top:-12%;left:-14%;background:radial-gradient(circle at 38% 38%,rgba(255,77,0,.42),transparent 68%)}
-.b2{width:40vmax;height:40vmax;top:32%;right:-16%;background:radial-gradient(circle at 60% 40%,rgba(255,154,60,.34),transparent 66%)}
-.b3{width:34vmax;height:34vmax;bottom:-10%;left:18%;background:radial-gradient(circle at 45% 55%,rgba(255,50,110,.26),transparent 66%)}
-.b4{width:28vmax;height:28vmax;top:56%;left:2%;background:radial-gradient(circle,rgba(130,80,255,.22),transparent 66%)}
+.blob{position:absolute;border-radius:50%;filter:blur(60px);mix-blend-mode:screen;pointer-events:none;z-index:-4}
+.b1{width:46vmax;height:46vmax;top:-12%;left:-14%;background:radial-gradient(circle,rgba(255,77,0,.42),transparent 68%)}
+.b2{width:40vmax;height:40vmax;top:32%;right:-16%;background:radial-gradient(circle,rgba(255,154,60,.34),transparent 66%)}
+.b3{width:34vmax;height:34vmax;bottom:-10%;left:18%;background:radial-gradient(circle,rgba(255,50,110,.26),transparent 66%)}
 .dust{position:fixed;inset:0;z-index:-3;pointer-events:none}
-.dust i{position:absolute;border-radius:50%;background:#ffd9b0;
-  box-shadow:0 0 6px 1px rgba(255,190,120,.8);animation:tw var(--tw,4s) ease-in-out infinite var(--d,0s)}
+.dust i{position:absolute;border-radius:50%;background:#ffd9b0;box-shadow:0 0 6px rgba(255,190,120,.8);
+  animation:tw var(--tw,4s) ease-in-out infinite var(--d,0s)}
 @keyframes tw{0%,100%{opacity:.08}50%{opacity:.75}}
-.embers{position:fixed;inset:0;z-index:-3;pointer-events:none;overflow:hidden}
-.embers i{position:absolute;bottom:-12px;border-radius:50%;background:var(--ember);
-  box-shadow:0 0 8px 2px rgba(255,120,30,.7);animation:rise linear infinite}
-@keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.9}100%{transform:translateY(-110vh) translateX(-20px) rotate(360deg);opacity:0}}
-.grain{position:fixed;inset:-100%;z-index:98;pointer-events:none;opacity:.055;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation:gr .7s steps(4) infinite}
-@keyframes gr{0%{transform:translate(0)}25%{transform:translate(-2%,3%)}50%{transform:translate(3%,-2%)}75%{transform:translate(-3%,-3%)}100%{transform:translate(2%,2%)}}
-.cursor-light{position:fixed;z-index:-2;width:520px;height:520px;left:-9999px;top:-9999px;
-  pointer-events:none;border-radius:50%;mix-blend-mode:screen;
-  background:radial-gradient(circle,rgba(255,77,0,.14),transparent 62%);
-  transform:translate(-50%,-50%)}
+.grain{position:fixed;inset:0;z-index:98;pointer-events:none;opacity:.05;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
 
 .wrap{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:0 20px}
 
-.ticker{border-bottom:1px solid rgba(255,77,0,.35);overflow:hidden;white-space:nowrap;
-  font-size:11px;font-weight:600;letter-spacing:.28em;color:var(--hot);padding:11px 0;
-  text-transform:uppercase;font-family:'Unbounded';background:rgba(10,5,2,.5);backdrop-filter:blur(10px)}
+.ticker{border-bottom:1px solid rgba(255,77,0,.35);overflow:hidden;white-space:nowrap;font-size:11px;
+  letter-spacing:.28em;color:var(--hot);padding:11px 0;text-transform:uppercase;
+  font-family:'Unbounded';background:rgba(10,5,2,.5)}
 .ticker span{display:inline-block;animation:tick 26s linear infinite}
 @keyframes tick{to{transform:translateX(-50%)}}
 
-.hero{padding:72px 0 48px;text-align:center}
+.hero{padding:64px 0 44px;text-align:center}
 .kicker{font-size:10px;letter-spacing:.42em;color:var(--ember);text-transform:uppercase;
-  font-family:'Unbounded';font-weight:500;display:flex;align-items:center;gap:14px;
-  justify-content:center;margin-bottom:26px}
-.kicker::before,.kicker::after{content:'';width:44px;height:1px;background:var(--hot)}
+  font-family:'Unbounded';display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:24px}
+.kicker::before,.kicker::after{content:'';width:40px;height:1px;background:var(--hot)}
 .server-title{font-family:'Unbounded';font-weight:300;font-size:clamp(11px,2.6vw,15px);
-  letter-spacing:.24em;color:var(--dim);text-transform:uppercase;margin-bottom:18px;
-  display:inline-block;padding:10px 22px;border:1px solid rgba(255,77,0,.3);
-  border-radius:99px;background:rgba(255,77,0,.05)}
-h1{font-family:'Unbounded';font-weight:800;font-size:clamp(38px,9vw,84px);
-  line-height:1.02;text-transform:uppercase;color:var(--bone);transition:transform .15s ease-out}
-h1 em{font-style:normal;color:var(--hot);text-shadow:0 0 34px rgba(255,77,0,.55),0 0 90px rgba(255,77,0,.25)}
-.hero p{margin:22px auto 0;max-width:430px;color:var(--dim);font-size:13.5px}
+  letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:16px;display:inline-block;
+  padding:10px 22px;border:1px solid rgba(255,77,0,.3);border-radius:99px;background:rgba(255,77,0,.05)}
+h1{font-family:'Unbounded';font-weight:800;font-size:clamp(38px,9vw,84px);line-height:1.02;
+  text-transform:uppercase;color:var(--bone)}
+h1 em{font-style:normal;color:var(--hot);text-shadow:0 0 34px rgba(255,77,0,.55)}
+.hero p{margin:20px auto 0;max-width:430px;color:var(--dim);font-size:13.5px}
 .hero p b{color:var(--bone)}
 
-.badges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:28px}
-.badge{font-family:'Unbounded';font-weight:500;font-size:9.5px;letter-spacing:.2em;
-  text-transform:uppercase;padding:9px 16px;border-radius:99px;color:var(--bone);
-  border:1px solid rgba(255,220,190,.25);
-  background:
-    radial-gradient(200px circle at var(--mx) var(--my),rgba(255,240,220,.25),transparent 70%),
-    linear-gradient(135deg,rgba(255,77,0,.10),rgba(255,255,255,.04));
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  transition:transform .2s,border-color .3s;cursor:default}
+.badges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:26px}
+.badge{font-family:'Unbounded';font-weight:500;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  padding:9px 16px;border-radius:99px;color:var(--bone);border:1px solid rgba(255,220,190,.25);
+  background:linear-gradient(135deg,rgba(255,77,0,.10),rgba(255,255,255,.04));transition:.2s}
 .badge:hover{transform:translateY(-3px);border-color:rgba(255,77,0,.55)}
 .badge b{color:var(--hot)}
 
-.reveal{opacity:0;transform:translateY(28px);
-  transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s cubic-bezier(.2,.7,.2,1)}
 .reveal.vis{opacity:1;transform:none}
-.no-io .reveal{opacity:1;transform:none}
 
-.glass{position:relative;border-radius:24px;isolation:isolate;
-  background:
-    radial-gradient(340px circle at var(--mx) var(--my),
-      rgba(255,240,220,.22),rgba(255,180,110,.09) 45%,transparent 75%),
-    linear-gradient(135deg,rgba(255,77,0,.09),rgba(255,255,255,.04) 45%,rgba(255,154,60,.07));
-  backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);
+.glass{position:relative;border-radius:24px;
+  background:linear-gradient(135deg,rgba(255,77,0,.09),rgba(255,255,255,.04) 45%,rgba(255,154,60,.07));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border:1px solid rgba(255,220,190,.25);
-  box-shadow:inset 0 2px 1px rgba(255,235,210,.28),inset 0 -6px 14px rgba(0,0,0,.30),0 18px 44px rgba(0,0,0,.42)}
-.glass::before{content:'';position:absolute;inset:0;border-radius:inherit;z-index:2;pointer-events:none;padding:1px;
-  background:radial-gradient(300px circle at var(--mx) var(--my),rgba(255,230,200,.5),transparent 70%);
-  opacity:var(--glow);transition:opacity .5s ease;
-  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude}
-.glass::after{content:'';position:absolute;inset:0;border-radius:inherit;z-index:0;pointer-events:none;
-  background:radial-gradient(260px circle at var(--mx) var(--my),rgba(255,77,0,.14),transparent 75%);
-  opacity:var(--glow);transition:opacity .5s ease}
+  box-shadow:inset 0 2px 1px rgba(255,235,210,.25),0 18px 44px rgba(0,0,0,.4)}
 
-.ip-block{margin-top:36px;padding:30px 26px;cursor:pointer}
-.ip-label{font-size:9px;letter-spacing:.38em;color:var(--ember);text-transform:uppercase;
-  margin-bottom:14px;font-family:'Unbounded';font-weight:500}
-.ip-value{font-family:'Unbounded';font-weight:800;font-size:clamp(22px,5.4vw,42px);letter-spacing:.02em;line-height:1.15}
+.ip-block{margin-top:34px;padding:28px 24px;cursor:pointer;text-align:left}
+.ip-label{font-size:9px;letter-spacing:.36em;color:var(--ember);text-transform:uppercase;
+  margin-bottom:12px;font-family:'Unbounded'}
+.ip-value{font-family:'Unbounded';font-weight:800;font-size:clamp(22px,5.4vw,40px)}
 .ip-value i{font-style:normal;color:var(--hot)}
 .ip-copied{position:absolute;right:16px;top:16px;font-size:10px;font-weight:800;color:#000;
-  background:var(--hot);padding:6px 14px;border-radius:99px;opacity:0;transition:.3s;
-  text-transform:uppercase;z-index:3;font-family:'Manrope'}
+  background:var(--hot);padding:6px 14px;border-radius:99px;opacity:0;transition:.3s;text-transform:uppercase}
 .ip-copied.show{opacity:1}
 
-.sec{padding:52px 0;border-bottom:1px solid rgba(232,221,208,.09)}
-.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:30px}
+.sec{padding:48px 0;border-bottom:1px solid rgba(232,221,208,.09)}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:28px}
 .sec-num{font-family:'Unbounded';font-weight:800;font-size:13px;color:var(--hot)}
-.sec-title{font-family:'Unbounded';font-weight:500;font-size:19px;letter-spacing:.08em;text-transform:uppercase}
+.sec-title{font-family:'Unbounded';font-weight:500;font-size:19px;letter-spacing:.06em;text-transform:uppercase}
 
 .stats-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
-.online-big{font-family:'Unbounded';font-weight:800;font-size:40px;line-height:1}
+.online-big{font-family:'Unbounded';font-weight:800;font-size:38px;line-height:1}
 .online-big i{font-style:normal;color:var(--hot);font-size:22px}
-.online-cap{font-size:9.5px;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;
-  text-align:right;line-height:1.9;font-family:'Unbounded';font-weight:500}
-.gauge{height:6px;border-radius:6px;overflow:hidden;background:rgba(232,221,208,.10);box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.online-cap{font-size:9.5px;letter-spacing:.26em;color:var(--dim);text-transform:uppercase;
+  text-align:right;line-height:1.9;font-family:'Unbounded'}
+.gauge{height:6px;border-radius:6px;overflow:hidden;background:rgba(232,221,208,.1)}
 .gauge i{display:block;height:100%;width:0;border-radius:6px;
   background:linear-gradient(90deg,var(--hot),var(--ember));box-shadow:0 0 16px var(--hot);
-  transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
-.mini-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:22px}
+  transition:width 1.4s cubic-bezier(.2,.8,.2,1)}
+.mini-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:20px}
 .mini-stat{padding:16px;border-radius:18px;text-align:center;border:1px solid rgba(255,220,190,.15);
   background:linear-gradient(135deg,rgba(255,77,0,.06),rgba(255,255,255,.02))}
-.mini-stat b{display:block;font-family:'Unbounded';font-weight:800;font-size:20px;color:var(--bone)}
-.mini-stat span{font-size:8.5px;letter-spacing:.24em;color:var(--dim);text-transform:uppercase;font-family:'Unbounded'}
+.mini-stat b{display:block;font-family:'Unbounded';font-weight:800;font-size:19px}
 .mini-stat b em{font-style:normal;color:var(--hot)}
+.mini-stat span{font-size:8.5px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;font-family:'Unbounded'}
 
-.feat-list li{list-style:none;display:flex;gap:20px;align-items:baseline;padding:15px 16px;
+.feat-list li{list-style:none;display:flex;gap:18px;padding:13px 14px;
   border-bottom:1px dashed rgba(232,221,208,.12);font-size:13.5px;transition:.25s;border-radius:12px}
-.feat-list li:hover{background:linear-gradient(90deg,rgba(255,77,0,.09),transparent 70%);padding-left:24px}
+.feat-list li:hover{background:linear-gradient(90deg,rgba(255,77,0,.09),transparent);padding-left:22px}
 .feat-list li:last-child{border-bottom:none}
-.feat-n{font-family:'Unbounded';font-weight:800;color:var(--hot);font-size:11px;min-width:34px}
-.feat-t{color:var(--dim)}.feat-t b{color:var(--bone);font-weight:800}
+.feat-n{font-family:'Unbounded';font-weight:800;color:var(--hot);font-size:11px;min-width:32px}
+.feat-t{color:var(--dim)}.feat-t b{color:var(--bone)}
 
-.vip-callout{margin-top:26px;padding:24px;font-weight:800;font-size:14px;line-height:1.55;border-radius:24px;color:#140800;
-  background:
-    radial-gradient(120% 160% at 15% 0%,rgba(255,255,255,.4),transparent 50%),
-    linear-gradient(135deg,#ff4d00,#ff7a1e 55%,#ffa64d);
-  border:1px solid rgba(255,235,200,.55);
-  box-shadow:inset 0 2px 2px rgba(255,250,235,.6),inset 0 -8px 18px rgba(120,30,0,.35),0 18px 48px rgba(255,77,0,.35)}
-.vip-callout small{display:block;margin-top:8px;font-weight:400;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.78}
+.vip-callout{margin-top:24px;padding:22px;font-weight:800;font-size:14px;border-radius:24px;color:#140800;
+  background:linear-gradient(135deg,#ff4d00,#ff7a1e 55%,#ffa64d);
+  box-shadow:inset 0 2px 2px rgba(255,250,235,.6),0 18px 48px rgba(255,77,0,.35)}
+.vip-callout small{display:block;margin-top:8px;font-weight:600;font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;opacity:.8}
 
 .steps{counter-reset:s}
-.step{display:flex;gap:20px;align-items:flex-start;padding:18px 16px;
-  border-bottom:1px dashed rgba(232,221,208,.12);border-radius:12px;transition:.25s}
+.step{display:flex;gap:18px;align-items:flex-start;padding:16px 14px;
+  border-bottom:1px dashed rgba(232,221,208,.12);border-radius:12px}
 .step:last-child{border-bottom:none}
-.step:hover{background:linear-gradient(90deg,rgba(255,77,0,.08),transparent);padding-left:24px}
-.s-num{counter-increment:s;flex-shrink:0;width:42px;height:42px;border-radius:50%;
+.s-num{counter-increment:s;flex-shrink:0;width:40px;height:40px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;font-family:'Unbounded';
-  font-weight:800;font-size:14px;color:var(--hot);border:1px solid rgba(255,77,0,.45);
-  box-shadow:0 0 18px rgba(255,77,0,.18) inset}
+  font-weight:800;font-size:13px;color:var(--hot);border:1px solid rgba(255,77,0,.45)}
 .s-num::before{content:"0" counter(s)}
 .s-txt{font-size:13.5px;color:var(--dim)}.s-txt b{color:var(--bone)}
-.s-txt code{font-family:'Manrope';background:rgba(255,77,0,.12);color:var(--ember);
-  padding:2px 9px;border-radius:8px;font-weight:600;font-size:12.5px}
+.s-txt code{background:rgba(255,77,0,.12);color:var(--ember);padding:2px 9px;border-radius:8px;font-weight:600;font-size:12.5px}
 
-.cta-row{display:flex;flex-direction:column;gap:18px;margin-top:52px}
-.btn{position:relative;display:block;text-align:center;padding:23px;z-index:1;
-  font-family:'Unbounded';font-weight:800;font-size:14px;letter-spacing:.16em;
-  text-transform:uppercase;text-decoration:none;border-radius:24px;
-  transition:transform .15s cubic-bezier(.3,1.6,.5,1),box-shadow .2s}
-.btn:active{transform:translateY(4px) scale(.985);transition-duration:.05s}
-.btn-primary{color:#fff;
-  background:
-    radial-gradient(360px circle at var(--mx) var(--my),
-      rgba(255,250,235,.45),rgba(255,170,90,.15) 50%,transparent 78%),
-    linear-gradient(160deg,#ff7a1e,#ff4d00 45%,#d63a00);
+.cta-row{display:flex;flex-direction:column;gap:16px;margin-top:48px}
+.btn{position:relative;display:block;text-align:center;padding:21px;
+  font-family:'Unbounded';font-weight:800;font-size:13px;letter-spacing:.14em;
+  text-transform:uppercase;text-decoration:none;border-radius:24px;transition:transform .15s,box-shadow .2s}
+.btn:active{transform:translateY(4px) scale(.985)}
+.btn-primary{color:#fff;background:linear-gradient(160deg,#ff7a1e,#ff4d00 45%,#d63a00);
   border:1px solid rgba(255,225,190,.55);
-  box-shadow:
-    inset 0 3px 2px rgba(255,245,225,.5),inset 0 -10px 20px rgba(110,20,0,.45),
-    inset 0 0 30px rgba(255,150,60,.2),
-    0 12px 0 #8a2600,0 12px 0 1px rgba(0,0,0,.25),0 24px 50px rgba(255,77,0,.35)}
-.btn-primary:active{box-shadow:
-    inset 0 3px 2px rgba(255,245,225,.5),inset 0 -6px 14px rgba(110,20,0,.5),
-    0 5px 0 #8a2600,0 5px 0 1px rgba(0,0,0,.25),0 10px 22px rgba(255,77,0,.3)}
-.btn-line{color:var(--bone);
-  background:
-    radial-gradient(340px circle at var(--mx) var(--my),
-      rgba(255,240,220,.25),rgba(255,154,60,.08) 50%,transparent 78%),
-    linear-gradient(135deg,rgba(255,77,0,.10),rgba(255,255,255,.04) 45%,rgba(255,154,60,.07));
-  backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);
+  box-shadow:inset 0 3px 2px rgba(255,245,225,.5),0 12px 0 #8a2600,0 24px 50px rgba(255,77,0,.35)}
+.btn-primary:active{box-shadow:inset 0 3px 2px rgba(255,245,225,.5),0 5px 0 #8a2600,0 10px 22px rgba(255,77,0,.3)}
+.btn-line{color:var(--bone);background:linear-gradient(135deg,rgba(255,77,0,.10),rgba(255,255,255,.04));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border:1px solid rgba(255,220,190,.25);
-  box-shadow:
-    inset 0 2px 1px rgba(255,235,210,.25),inset 0 -8px 16px rgba(0,0,0,.28),
-    0 10px 0 rgba(30,14,5,.9),0 10px 0 1px rgba(0,0,0,.3),0 20px 44px rgba(0,0,0,.4)}
+  box-shadow:inset 0 2px 1px rgba(255,235,210,.2),0 10px 0 rgba(30,14,5,.9),0 20px 44px rgba(0,0,0,.35)}
 .btn-line:hover{color:#fff}
-.btn-line:active{box-shadow:
-    inset 0 2px 1px rgba(255,235,210,.25),inset 0 -5px 10px rgba(0,0,0,.35),
-    0 4px 0 rgba(30,14,5,.9),0 4px 0 1px rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.35)}
+.btn-line:active{box-shadow:inset 0 2px 1px rgba(255,235,210,.2),0 4px 0 rgba(30,14,5,.9),0 8px 18px rgba(0,0,0,.3)}
 
-.member{display:flex;align-items:center;gap:18px;padding:18px;margin-bottom:12px;
+.member{display:flex;align-items:center;gap:16px;padding:16px;margin-bottom:10px;
   text-decoration:none;color:inherit;transition:.25s;border-radius:18px}
-.member:last-child{margin-bottom:0}
-.member:hover{background:linear-gradient(135deg,rgba(255,77,0,.08),transparent);transform:translateY(-2px)}
-.m-tag{font-size:8px;letter-spacing:.24em;color:#000;background:var(--bone);padding:5px 11px;
-  font-weight:800;text-transform:uppercase;border-radius:99px;flex-shrink:0;font-family:'Manrope'}
+.member:hover{background:linear-gradient(135deg,rgba(255,77,0,.08),transparent)}
+.m-tag{font-size:8px;letter-spacing:.2em;color:#000;background:var(--bone);padding:5px 11px;
+  font-weight:800;text-transform:uppercase;border-radius:99px;flex-shrink:0}
 .m-owner .m-tag{background:var(--hot);color:#fff}
-.m-name{font-family:'Unbounded';font-weight:500;font-size:17px;transition:.2s}
+.m-name{font-family:'Unbounded';font-weight:500;font-size:16px}
 .member:hover .m-name{color:var(--hot)}
-.m-role{margin-left:auto;font-size:9px;letter-spacing:.22em;color:var(--dim);
+.m-role{margin-left:auto;font-size:9px;letter-spacing:.2em;color:var(--dim);
   text-transform:uppercase;text-align:right;line-height:1.7;font-family:'Unbounded'}
 
-.rule{display:flex;gap:18px;padding:16px;border-bottom:1px dashed rgba(232,221,208,.12);
-  font-size:13.5px;align-items:baseline;transition:.25s;border-radius:12px}
+.rule{display:flex;gap:16px;padding:14px;border-bottom:1px dashed rgba(232,221,208,.12);
+  font-size:13.5px;transition:.25s;border-radius:12px}
 .rule:last-child{border:none}
-.rule:hover{background:linear-gradient(90deg,rgba(255,77,0,.07),transparent);padding-left:24px}
-.r-num{font-family:'Unbounded';font-weight:800;font-size:11px;color:var(--hot);min-width:34px}
-.r-txt{color:var(--dim);line-height:1.6}.r-txt b{color:var(--bone)}
-.rules-note{margin-top:22px;font-size:11px;color:rgba(138,122,106,.7);
-  border-left:2px solid var(--hot);padding-left:14px;line-height:1.7}
+.rule:hover{background:linear-gradient(90deg,rgba(255,77,0,.07),transparent);padding-left:22px}
+.r-num{font-family:'Unbounded';font-weight:800;font-size:11px;color:var(--hot);min-width:32px}
+.r-txt{color:var(--dim)}.r-txt b{color:var(--bone)}
+.rules-note{margin-top:20px;font-size:11px;color:rgba(138,122,106,.7);
+  border-left:2px solid var(--hot);padding-left:14px}
 
-footer{padding:44px 0 56px;text-align:center;font-size:9px;letter-spacing:.3em;
+footer{padding:40px 0 52px;text-align:center;font-size:9px;letter-spacing:.28em;
   color:rgba(138,122,106,.6);text-transform:uppercase;line-height:2.4;font-family:'Unbounded'}
 footer b{color:var(--hot)}
 
-@media(max-width:600px){
-  .hero{padding-top:52px}.btn{font-size:12px;padding:20px}.online-big{font-size:32px}.cursor-light{display:none}}
+@media(max-width:600px){.hero{padding-top:44px}.btn{font-size:11px;padding:18px}.online-big{font-size:30px}}
 </style>
 </head>
 <body>
@@ -262,21 +185,16 @@ footer b{color:var(--hot)}
 <div id="loader">
   <div class="lg">Турбина <em>Туриста</em></div>
   <div class="bar"><i></i></div>
-  <div class="st">Загружаем сервер…</div>
 </div>
 
 <div class="sky"></div>
 <div class="grid-floor"></div>
-<div class="blobs"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div></div>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
 <div class="dust" id="dust"></div>
-<div class="embers" id="embers"></div>
 <div class="grain"></div>
-<div class="cursor-light" id="clight"></div>
 
-<div class="ticker">
-  <span>[V34] TURBINA TURISTA [PUBLIC] 18+ — ONLINE 24/7 — NO CHEATERS — LOW PING —&nbsp;
-        [V34] TURBINA TURISTA [PUBLIC] 18+ — ONLINE 24/7 — NO CHEATERS — LOW PING —&nbsp;</span>
-</div>
+<div class="ticker"><span>[V34] TURBINA TURISTA [PUBLIC] 18+ — ONLINE 24/7 — NO CHEATERS — LOW PING —&nbsp;
+[V34] TURBINA TURISTA [PUBLIC] 18+ — ONLINE 24/7 — NO CHEATERS — LOW PING —&nbsp;</span></div>
 
 <div class="wrap">
 
@@ -285,21 +203,19 @@ footer b{color:var(--hot)}
     <div class="kicker reveal">Counter-Strike Source · Public · 18+</div>
     <h1>Турбина<br><em>Туриста</em></h1>
     <p class="reveal">Сервер, который работает когда ты спишь.
-       <b>64 слота</b>, защита от читов, своя атмосфера
-       и администрация, которая реально отвечает.</p>
+      <b>64 слота</b>, защита от читов и администрация, которая реально отвечает.</p>
     <div class="badges reveal">
       <span class="badge">Версия <b>v34</b></span>
       <span class="badge">Режим <b>Public</b></span>
       <span class="badge"><b>18+</b> только</span>
-      <span class="badge"><b>64</b> слота</span>
       <span class="badge">Онлайн <b>24/7</b></span>
     </div>
   </section>
 
-  <div class="ip-block glass reveal" onclick="copyIP()" title="Нажми, чтобы скопировать">
+  <div class="ip-block glass reveal" onclick="copyIP()">
     <div class="ip-label">Подключение — нажми, чтобы скопировать</div>
     <div class="ip-value">46.174.50.240<i>:27015</i></div>
-    <div style="margin-top:12px;font-size:11px;color:var(--dim)">Консоль → connect 46.174.50.240:27015</div>
+    <div style="margin-top:10px;font-size:11px;color:var(--dim)">Консоль → connect 46.174.50.240:27015</div>
     <div class="ip-copied" id="copied">Скопировано</div>
   </div>
 
@@ -313,24 +229,24 @@ footer b{color:var(--hot)}
     <div class="mini-stats">
       <div class="mini-stat"><b id="msOnline">—<em>/64</em></b><span>Игроков сейчас</span></div>
       <div class="mini-stat"><b><em>24/7</em></b><span>Без перерывов</span></div>
-      <div class="mini-stat"><b><em>18+</em></b><span>Только для взрослых</span></div>
-      <div class="mini-stat"><b id="msVisits">—</b><span>Просмотров сайта</span></div>
+      <div class="mini-stat"><b><em>18+</em></b><span>Для взрослых</span></div>
+      <div class="mini-stat"><b><em>v34</em></b><span>No-Steam</span></div>
     </div>
   </section>
 
   <section class="sec reveal">
     <div class="sec-head"><span class="sec-num">02</span><span class="sec-title">Почему к нам идут</span></div>
     <ul class="feat-list">
-      <li><span class="feat-n">/01</span><span class="feat-t"><b>Защита и стабильность.</b> Сервер живёт без падений, читы банятся навсегда.</span></li>
-      <li><span class="feat-n">/02</span><span class="feat-t"><b>Администрация.</b> Адекватные люди, отвечают быстро, решения — по правилам.</span></li>
-      <li><span class="feat-n">/03</span><span class="feat-t"><b>Цены.</b> VIP и скины стоят дешевле, чем везде.</span></li>
-      <li><span class="feat-n">/04</span><span class="feat-t"><b>Пинг.</b> Стабильно низкий для всей России и СНГ.</span></li>
-      <li><span class="feat-n">/05</span><span class="feat-t"><b>Люди.</b> Дружный коллектив — заходишь один раз, остаёшься.</span></li>
-      <li><span class="feat-n">/06</span><span class="feat-t"><b>Розыгрыши.</b> Регулярные конкурсы с реальными призами.</span></li>
+      <li><span class="feat-n">/01</span><span class="feat-t"><b>Стабильность.</b> Сервер живёт без падений, читы банятся навсегда.</span></li>
+      <li><span class="feat-n">/02</span><span class="feat-t"><b>Администрация.</b> Адекватные люди, отвечают быстро.</span></li>
+      <li><span class="feat-n">/03</span><span class="feat-t"><b>Цены.</b> VIP и скины дешевле, чем везде.</span></li>
+      <li><span class="feat-n">/04</span><span class="feat-t"><b>Пинг.</b> Стабильно низкий для России и СНГ.</span></li>
+      <li><span class="feat-n">/05</span><span class="feat-t"><b>Люди.</b> Дружный коллектив — зашёл один раз, остался.</span></li>
+      <li><span class="feat-n">/06</span><span class="feat-t"><b>Розыгрыши.</b> Регулярные конкурсы с призами.</span></li>
       <li><span class="feat-n">/07</span><span class="feat-t"><b>Музыка.</b> Своя подборка прямо на сервере.</span></li>
     </ul>
     <div class="vip-callout reveal">
-      Девушкам с микрофоном — статус VIP бесплатно.
+      Девушкам с микрофоном — VIP бесплатно
       <small>Напиши администрации в беседе ВК — активируем за пару минут</small>
     </div>
   </section>
@@ -338,10 +254,10 @@ footer b{color:var(--hot)}
   <section class="sec reveal">
     <div class="sec-head"><span class="sec-num">03</span><span class="sec-title">Как зайти за 30 секунд</span></div>
     <div class="steps">
-      <div class="step"><span class="s-num"></span><span class="s-txt"><b>Запусти CS:S v34.</b> Подойдёт любая no-steam сборка версии 34.</span></div>
-      <div class="step"><span class="s-num"></span><span class="s-txt"><b>Открой консоль</b> клавишей <code>~</code> (тильда).</span></div>
-      <div class="step"><span class="s-num"></span><span class="s-txt">Введи команду <code>connect 46.174.50.240:27015</code> и жми Enter.</span></div>
-      <div class="step"><span class="s-num"></span><span class="s-txt"><b>Готово!</b> Ты в игре. Добавь сервер в избранное, чтобы не искать.</span></div>
+      <div class="step"><span class="s-num"></span><span class="s-txt"><b>Запусти CS:S v34.</b> Подойдёт любая no-steam сборка.</span></div>
+      <div class="step"><span class="s-num"></span><span class="s-txt"><b>Открой консоль</b> клавишей <code>~</code>.</span></div>
+      <div class="step"><span class="s-num"></span><span class="s-txt">Введи <code>connect 46.174.50.240:27015</code> и жми Enter.</span></div>
+      <div class="step"><span class="s-num"></span><span class="s-txt"><b>Готово!</b> Добавь сервер в избранное.</span></div>
     </div>
   </section>
 
@@ -351,28 +267,26 @@ footer b{color:var(--hot)}
     <a class="btn btn-line" href="https://vk.me/join/AZQ1d5GqGxNu8kbUvSc03yqF" target="_blank" rel="noopener">Беседа ВКонтакте</a>
   </div>
 
-  <section class="sec reveal" style="margin-top:52px">
+  <section class="sec reveal" style="margin-top:48px">
     <div class="sec-head"><span class="sec-num">04</span><span class="sec-title">Команда проекта</span></div>
     <a class="member m-owner" href="https://vk.ru/id60857725" target="_blank" rel="noopener">
       <span class="m-tag">Owner</span><span class="m-name">DO-RE-MI#</span>
-      <span class="m-role">Основатель<br>VK профиль</span>
-    </a>
+      <span class="m-role">Основатель<br>VK профиль</span></a>
     <a class="member" href="https://vk.ru/id872777155" target="_blank" rel="noopener">
       <span class="m-tag">Admin</span><span class="m-name">ТОБИии</span>
-      <span class="m-role">Гл. администратор<br>VK профиль</span>
-    </a>
+      <span class="m-role">Гл. администратор<br>VK профиль</span></a>
   </section>
 
   <section class="sec reveal">
     <div class="sec-head"><span class="sec-num">05</span><span class="sec-title">Правила сервера</span></div>
-    <div class="rule"><span class="r-num">01</span><span class="r-txt"><b>Читы / CFG / Макросы</b> — запрещены в любом виде. Перманентный бан без обсуждения.</span></div>
-    <div class="rule"><span class="r-num">02</span><span class="r-txt"><b>Микрофон 18+.</b> Если тебе меньше 18 — будь добр, веди себя адекватно.</span></div>
-    <div class="rule"><span class="r-num">03</span><span class="r-txt"><b>Чат сервера</b> — никакой рекламы, спама и флуда.</span></div>
+    <div class="rule"><span class="r-num">01</span><span class="r-txt"><b>Читы / CFG / Макросы</b> — перманентный бан без обсуждения.</span></div>
+    <div class="rule"><span class="r-num">02</span><span class="r-txt"><b>Микрофон 18+.</b> Если тебе меньше 18 — веди себя адекватно.</span></div>
+    <div class="rule"><span class="r-num">03</span><span class="r-txt"><b>Чат сервера</b> — без рекламы, спама и флуда.</span></div>
     <div class="rule"><span class="r-num">04</span><span class="r-txt"><b>Оскорбления</b> админов и игроков запрещены.</span></div>
     <div class="rule"><span class="r-num">05</span><span class="r-txt"><b>AWP</b> разрешена только при игре 5 на 5.</span></div>
-    <div class="rule"><span class="r-num">06</span><span class="r-txt"><b>Реклама в игровом нике</b> запрещена.</span></div>
-    <div class="rule"><span class="r-num">07</span><span class="r-txt"><b>Распрыжка запрещена.</b> Допускается максимум два прыжка подряд.</span></div>
-    <p class="rules-note">Незнание правил не освобождает от наказания. Спорные ситуации — в беседе ВКонтакте.</p>
+    <div class="rule"><span class="r-num">06</span><span class="r-txt"><b>Реклама в нике</b> запрещена.</span></div>
+    <div class="rule"><span class="r-num">07</span><span class="r-txt"><b>Распрыжка запрещена.</b> Максимум два прыжка подряд.</span></div>
+    <p class="rules-note">Незнание правил не освобождает от наказания. Спорные ситуации — в беседе ВК.</p>
   </section>
 
   <footer>[V34] TURBINA TURISTA [PUBLIC] 18+ · EST. <b>20.10.2024</b><br>CS:S v34 · Public · 24/7</footer>
@@ -382,6 +296,83 @@ footer b{color:var(--hot)}
 (function(){
 'use strict';
 
-/* ═══ 1. ПРЕЛОАДЕР — прячется всегда, вечная загрузка невозможна
+/* ── прелоадер: прячется всегда, вечная загрузка исключена ── */
+function hideLoader(){var l=document.getElementById('loader');
+  if(l)l.classList.add('done');}
+if(document.readyState==='complete'){hideLoader();}
+else{window.addEventListener('load',function(){
+  setTimeout(hideLoader,400);});}
+setTimeout(hideLoader,1500); /* страховка */
 
-> ⚠️ The response reached the length limit. Reply **continue** to get the rest.
+/* ── копирование IP ── */
+window.copyIP=function(){
+  var ip='46.174.50.240:27015';
+  function ok(){var c=document.getElementById('copied');if(!c)return;
+    c.classList.add('show');setTimeout(function(){c.classList.remove('show')},1400);}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ip).then(ok).catch(ok);
+  }else{
+    var i=document.createElement('input');i.value=ip;
+    document.body.appendChild(i);i.select();
+    try{document.execCommand('copy')}catch(e){}
+    i.remove();ok();
+  }
+};
+
+/* ── онлайн с SourceBans (players_1) ── */
+function setOnline(p,m){
+  var b=document.getElementById('onlineBig');
+  if(b)b.innerHTML=p+'<i>/'+m+'</i>';
+  var ms=document.getElementById('msOnline');
+  if(ms)ms.innerHTML=p+'<em>/'+m+'</em>';
+  var g=document.getElementById('gaugeBar');
+  if(g)g.style.width=Math.min(p/m*100,100)+'%';
+}
+var onlineLoaded=false;
+function loadOnline(){
+  fetch('https://corsproxy.io/?url='+encodeURIComponent(
+    'https://turbina-turista-25.myarena.site/sb/index.php'))
+   .then(function(r){return r.text()})
+   .then(function(html){
+     var m=html.match(/id="players_1">\s*(\d{1,3})\s*\/\s*(\d{1,3})\s*</);
+     if(m){onlineLoaded=true;setOnline(+m[1],+m[2]);
+       var c=document.getElementById('onlineCap');
+       if(c)c.innerHTML='Работает 24/7<br>Онлайн обновляется каждую минуту';}
+   }).catch(function(){});
+}
+loadOnline();
+setInterval(loadOnline,60000);
+setTimeout(function(){ /* заглушка, если прокси не ответил */
+  if(!onlineLoaded){
+    setOnline(0,64);
+    var c=document.getElementById('onlineCap');
+    if(c)c.innerHTML='Работает 24/7<br>Карта: уточняй в беседе ВК';
+  }
+},9000);
+
+/* ── появление секций при скролле (с fallback) ── */
+var revs=document.querySelectorAll('.reveal');
+try{
+  var io=new IntersectionObserver(function(es){es.forEach(function(x){
+    if(x.isIntersecting){x.target.classList.add('vis');io.unobserve(x.target);}
+  })},{threshold:.12});
+  revs.forEach(function(el){io.observe(el)});
+}catch(e){
+  revs.forEach(function(el){el.classList.add('vis')});
+}
+
+/* ── пылинки ── */
+try{
+  var d=document.getElementById('dust');
+  for(var i=0;i<60;i++){
+    var s=document.createElement('i'),sz=.8+Math.random()*1.8;
+    s.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;'+
+      'width:'+sz+'px;height:'+sz+'px;'+
+      '--tw:'+(2.5+Math.random()*5)+'s;--d:'+(-Math.random()*6)+'s';
+    d.appendChild(s);
+  }
+}catch(e){}
+})();
+</script>
+</body>
+</html>
