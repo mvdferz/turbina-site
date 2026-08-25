@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TURBINA TURISTA · Игроки онлайн</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0908;--panel:#141210;--ember:#ff4d00;--hot:#ff6b2b;--bone:#e8ddd0;--dim:#8a8078}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--bone);font-family:'Manrope',sans-serif;min-height:100vh;
+background-image:radial-gradient(ellipse at 50% -20%,rgba(255,77,0,.12),transparent 60%)}
+.wrap{max-width:900px;margin:0 auto;padding:40px 20px 80px}
+
+/* шапка */
+header{text-align:center;margin-bottom:36px}
+.back{display:inline-block;font-family:'Unbounded';font-size:11px;color:var(--dim);text-decoration:none;
+letter-spacing:.15em;text-transform:uppercase;border:1px solid rgba(255,77,0,.3);border-radius:99px;
+padding:9px 22px;margin-bottom:26px;transition:.2s}
+.back:hover{color:var(--hot);border-color:var(--hot)}
+h1{font-family:'Unbounded';font-weight:900;font-size:clamp(24px,5vw,42px);letter-spacing:-.01em}
+h1 span{color:var(--ember)}
+.live{display:inline-flex;align-items:center;gap:8px;margin-top:14px;font-family:'Unbounded';
+font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+/* статистика сверху */
+.stats{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:30px}
+.stat{background:linear-gradient(135deg,rgba(255,77,0,.1),rgba(255,255,255,.02));
+border:1px solid rgba(232,221,208,.12);border-radius:16px;padding:14px 28px;text-align:center}
+.stat b{display:block;font-family:'Unbounded';font-size:22px;color:var(--hot)}
+.stat small{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim)}
+
+/* таблица */
+.tbl-wrap{overflow-x:auto;background:var(--panel);border:1px solid rgba(232,221,208,.1);
+border-radius:22px;padding:10px}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th{font-family:'Unbounded';font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ember);
+padding:14px 14px;text-align:left;border-bottom:1px solid rgba(255,77,0,.35)}
+td{padding:13px 14px;font-size:14px;border-bottom:1px solid rgba(232,221,208,.07)}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:.15s;animation:rowIn .35s ease both}
+tbody tr:nth-child(n+6){animation-delay:.05s}
+@keyframes rowIn{from{opacity:0;transform:translateY(8px)}}
+tbody tr:hover{background:rgba(255,77,0,.08)}
+.pos{font-family:'Unbounded';font-weight:800;font-size:12px;width:44px}
+.p1 .pos{color:#ffd700}.p2 .pos{color:#c0c0c0}.p3 .pos{color:#cd7f32}
+.nick{font-weight:800}
+.score{font-family:'Unbounded';font-weight:800;color:var(--hot)}
+.time{color:var(--dim)}
+.empty{text-align:center;color:var(--dim);padding:40px!important}
+
+.note{text-align:center;font-family:'Unbounded';font-size:9px;letter-spacing:.15em;
+text-transform:uppercase;color:var(--dim);margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+<a class="back" href="./">← На главную</a>
+<h1>ИГРОКИ <span>ОНЛАЙН</span></h1>
+<div class="live"><span class="dot"></span><span id="liveTxt">Live · обновление каждые 30 сек</span></div>
+</header>
+
+<div class="stats">
+<div class="stat"><b id="stOnline">—</b><small>Онлайн</small></div>
+<div class="stat"><b id="stTop">—</b><small>Топ фрагов</small></div>
+<div class="stat"><b id="stMap">—</b><small>Карта</small></div>
+</div>
+
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>#</th><th>Игрок</th><th>Фраги</th><th>Время в игре</th></tr></thead>
+<tbody id="pBody"><tr><td colspan="4" class="empty">Загрузка…</td></tr></tbody>
+</table>
+</div>
+
+<p class="note">Turbina Turista Public 18+ · данные с gs4u.net</p>
+
+</div>
+
+<script>
+/* ⚠️ укажи адрес своего воркера */
+var WORKER='https://turbina-online.maznatskijerzan.workers.dev';
+
+function fmt(t){
+  if(!t)return '—';
+  var p=t.split(':').map(Number);
+  if(p.length===3)return p[0]+'ч '+String(p[1]).padStart(2,'0')+'м';
+  return (p[0]>=60?Math.floor(p[0]/60)+'ч ':'')+((p[0]%60)||p[0])+'м';
+}
+
+function load(){
+  fetch(WORKER+'?board=1')
+    .then(function(r){return r.json()})
+    .then(function(d){
+      var ps=d.players||[];
+      document.getElementById('stOnline').textContent=ps.length;
+
+      var b=document.getElementById('pBody');
+      if(!ps.length){
+        b.innerHTML='<tr><td colspan="4" class="empty">На сервере сейчас пусто 😴</td></tr>';
+        return;
+      }
+
+      document.getElementById('stTop').textContent=ps[0].score+' фр.';
+      b.innerHTML=ps.map(function(p,i){
+        return '<tr class="'+(i<3?'p'+(i+1):'')+'">'+
+          '<td class="pos">'+(i+1)+'</td>'+
+          '<td class="nick">'+String(p.name).replace(/</g,'&lt;')+'</td>'+
+          '<td class="score">'+p.score+'</td>'+
+          '<td class="time">'+fmt(p.time)+'</td></tr>';
+      }).join('');
+    })
+    .catch(function(){
+      document.getElementById('pBody').innerHTML=
+        '<tr><td colspan="4" class="empty">Не удалось загрузить данные</td></tr>';
+    });
+}
+
+/* карта из общего онлайна (SourceBans через воркер) */
+fetch(WORKER).then(r=>r.text()).then(function(t){
+  var m=t.match(/map\\?"?:\\?"([\w_]+)/i);
+  if(m)document.getElementById('stMap').textContent=m[1];
+}).catch(()=>{});
+
+load();
+setInterval(load,30000);
+</script>
+</body>
+</html>
