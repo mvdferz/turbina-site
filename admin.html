@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель — Турбина Туриста [DEMO]</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--hot:#ff4d00;--ember:#ff9a3c;--bone:#efe6da;--dim:#93826f}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;color:var(--bone);min-height:100vh;background:#070302;
+background-image:radial-gradient(ellipse 80% 45% at 50% -8%,rgba(255,60,0,.28),transparent)}
+.wrap{max-width:680px;margin:0 auto;padding:36px 18px 70px}
+
+.demo-badge{display:block;text-align:center;font-family:'Unbounded';font-weight:800;font-size:9px;
+letter-spacing:.3em;color:#000;background:linear-gradient(135deg,#ffd166,#ff9a3c);
+padding:7px;border-radius:99px;margin-bottom:22px;text-transform:uppercase}
+
+h1{font-family:'Unbounded';font-weight:800;font-size:26px;text-transform:uppercase}
+h1 em{font-style:normal;color:var(--hot);text-shadow:0 0 24px rgba(255,77,0,.5)}
+.sub{color:var(--dim);font-size:13px;margin:6px 0 30px}
+
+.card{border-radius:24px;border:1px solid rgba(255,220,190,.2);
+background:linear-gradient(135deg,rgba(255,77,0,.09),rgba(255,255,255,.03));
+backdrop-filter:blur(14px);padding:26px 22px;margin-bottom:18px;
+box-shadow:inset 0 2px 1px rgba(255,235,210,.18),0 16px 40px rgba(0,0,0,.35)}
+
+label{display:block;font-family:'Unbounded';font-size:10px;letter-spacing:.25em;
+text-transform:uppercase;color:var(--ember);margin-bottom:12px}
+input[type=text],input[type=number],select{width:100%;padding:15px 17px;border-radius:15px;font-size:15px;
+color:var(--bone);background:rgba(7,3,2,.55);border:1px solid rgba(232,221,208,.18);outline:none;
+font-family:'Manrope';margin-bottom:6px;transition:.2s}
+input:focus,select:focus{border-color:var(--hot)}
+.hint{font-size:11px;color:var(--dim);margin-top:4px}
+
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.act{padding:17px 6px;border-radius:16px;text-align:center;cursor:pointer;font-weight:800;font-size:13.5px;
+border:1px solid rgba(232,221,208,.18);transition:.2s;background:rgba(7,3,2,.4);user-select:none}
+.act:hover{transform:translateY(-3px)}
+.act.sel-ban{background:linear-gradient(135deg,#ff4d00,#c23300)!important;border-color:#ff9a6a!important;
+box-shadow:0 12px 32px rgba(255,77,0,.4)}
+.act.sel-mute{background:linear-gradient(135deg,#eab308,#a16207)!important;border-color:#fde047!important;color:#000!important}
+.act.sel-vip{background:linear-gradient(135deg,#22c55e,#15803d)!important;border-color:#86efac!important;
+box-shadow:0 12px 32px rgba(34,197,94,.35)}
+
+.dur-type{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.dt{padding:13px 4px;border-radius:14px;text-align:center;cursor:pointer;font-size:11.5px;font-weight:800;
+border:1px solid rgba(232,221,208,.18);transition:.2s;user-select:none}
+.dt:hover{border-color:rgba(255,77,0,.55)}
+.dt.on{background:linear-gradient(135deg,var(--hot),#c23300);border-color:var(--ember);
+box-shadow:0 8px 22px rgba(255,77,0,.3)}
+
+.btn{width:100%;padding:19px;border:none;border-radius:20px;cursor:pointer;
+font-family:'Unbounded';font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#fff;
+background:linear-gradient(160deg,#ff7a1e,#ff4d00 45%,#d63a00);
+box-shadow:inset 0 3px 2px rgba(255,245,225,.5),0 10px 0 #8a2600,0 22px 44px rgba(255,77,0,.3);
+transition:.15s;margin-top:18px}
+.btn:active{transform:translateY(5px);box-shadow:inset 0 3px 2px rgba(255,245,225,.5),0 4px 0 #8a2600}
+#result{margin-top:16px;padding:15px 18px;border-radius:14px;font-size:13.5px;display:none;line-height:1.6}
+.ok{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.4);color:#86efac}
+.err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
+
+/* лог действий */
+.log-title{font-family:'Unbounded';font-size:11px;letter-spacing:.25em;color:var(--ember);
+text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.log-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--hot),transparent)}
+#log{max-height:260px;overflow-y:auto}
+.log-item{display:flex;gap:12px;padding:12px 4px;border-bottom:1px dashed rgba(232,221,208,.12);
+font-size:13px;align-items:flex-start}
+.log-item:last-child{border:none}
+.log-ic{font-size:16px;flex-shrink:0}
+.log-txt b{color:var(--bone)}
+.log-time{margin-left:auto;font-size:10px;color:var(--dim);font-family:'Unbounded';flex-shrink:0}
+.empty{color:var(--dim);font-size:12.5px;text-align:center;padding:20px 0}
+
+footer{text-align:center;margin-top:34px;font-size:9px;letter-spacing:.28em;color:rgba(138,122,106,.6);
+text-transform:uppercase;line-height:2.2;font-family:'Unbounded'}
+footer b{color:var(--hot)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="demo-badge">⚠ Демо-режим · команды не отправляются на реальный сервер</div>
+
+<h1>Админ<em>Панель</em></h1>
+<div class="sub">Управление игроками · [v34] Turbina Turista · 46.174.50.240:27015</div>
+
+<!-- КЛЮЧ -->
+<div class="card">
+<label>🔑 Ключ доступа администратора</label>
+<input type="password" id="key" placeholder="Введи свой личный ключ">
+<div class="hint">В демо подойдёт любой ключ</div>
+</div>
+
+<!-- ИГРОК -->
+<div class="card">
+<label>👤 Игрок</label>
+<select id="playerSel" onchange="document.getElementById('playerName').value=this.value">
+<option value="">— Выбери из списка онлайн (демо-игроки) —</option>
+<option>Kirill_228</option><option>Ded_Maxim</option><option>ProGamer_RU</option>
+<option>Sasha_Killer</option><option>Noob_Master</option><option>Vasya_Pupkin</option>
+<option>Cheater_Hunter</option><option>MamaYaVDome</option><option>xXx_Sniper_xXx</option>
+<option>Tolik_v34</option>
+</select>
+<div class="hint">Или введи ник вручную:</div>
+<input type="text" id="playerName" placeholder="Ник игрока">
+</div>
+
+<!-- ДЕЙСТВИЕ + СРОК -->
+<div class="card">
+<label>⚡ Действие</label>
+<div class="actions">
+<div class="act sel-ban" data-a="ban" onclick="pick(this)">🔨 Бан</div>
+<div class="act" data-a="mute" onclick="pick(this)">🔇 Мут</div>
+<div class="act" data-a="vip" onclick="pick(this)">👑 VIP</div>
+</div>
+
+<label>⏱️ Срок</label>
+<div class="dur-type">
+<div class="dt on" data-u="min" onclick="unit(this)">Минуты</div>
+<div class="dt" data-u="hours" onclick="unit(this)">Часы</div>
+<div class="dt" data-u="days" onclick="unit(this)">Дни</div>
+<div class="dt" data-u="perm" onclick="unit(this)">♾️ Навсегда</div>
+</div>
+
+<div id="numBox">
+<label>Сколько?</label>
+<input type="number" id="amount" value="30" min="1">
+</div>
+
+<label style="margin-top:14px">📝 Причина</label>
+<input type="text" id="reason" placeholder="Например: читы / оскорбления / спам в микрофон">
+
+<button class="btn" id="goBtn" onclick="send()">Применить действие</button>
+<div id="result"></div>
+</div>
+
+<!-- ЛОГ -->
+<div class="card">
+<div class="log-title">Журнал действий</div>
+<div id="log"><div class="empty">Пока пусто — примени первое действие выше 👆</div></div>
+</div>
+
+<footer>[V34] TURBINA TURISTA · <b>ADMIN PANEL DEMO</b> · 18+</footer>
+</div>
+
+<script>
+var action='ban', unit='min', logCount=0;
+
+function pick(el){
+  document.querySelectorAll('.act').forEach(function(x){x.className='act'});
+  el.classList.add('sel-'+el.dataset.a);
+  action=el.dataset.a;
+}
+function unit(el){
+  document.querySelectorAll('.dt').forEach(function(x){x.classList.remove('on')});
+  el.classList.add('on');
+  unit=el.dataset.u;
+  document.getElementById('numBox').style.display=(unit==='perm')?'none':'block';
+}
+function toSeconds(){
+  if(unit==='perm')return 0;
+  var n=Math.max(parseInt(document.getElementById('amount').value)||0,1);
+  if(unit==='min')return n*60;
+  if(unit==='hours')return n*3600;
+  return n*86400;
+}
+function human(secs){
+  if(secs===0)return 'навсегда';
+  var d=Math.floor(secs/86400),h=Math.floor(secs%86400/3600),m=Math.floor(secs%3600/60);
+  if(d)return d+' дн.';
+  if(h)return h+' ч.';
+  return m+' мин.';
+}
+function now(){
+  var t=new Date();
+  return ('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+':'+('0'+t.getSeconds()).slice(-2);
+}
+function show(el,cls,txt){el.style.display='block';el.className=cls;el.innerHTML=txt;}
+
+function send(){
+  var player=document.getElementById('playerName').value.trim();
+  var reason=document.getElementById('reason').value.trim()||'без причины';
+  var res=document.getElementById('result');
+
+  if(!player){show(res,'err','❌ Укажи ник игрока');return;}
+  var secs=toSeconds();
+
+  /* ДЕМО: имитация отправки */
+  var btn=document.getElementById('goBtn');
+  btn.disabled=true;btn.textContent='Отправляю…';
+  show(res,'ok','⏳ Команда уходит на сервер…');
+
+  setTimeout(function(){
+    var icon=action==='ban'?'🔨':action==='mute'?'🔇':'👑';
+    var name=action==='ban'?'Бан':action==='mute'?'Мут':'Выдача VIP';
+
+    show(res,'ok',
+      '✅ '+name+' применён!<br>'+
+      '<b>'+player+'</b> · '+human(secs)+'<br>'+
+      'Причина: '+reason+'<br>'+
+      '<span style="font-size:11px;opacity:.75">(в демо команда не отправляется на реальный сервер)</span>');
+
+    addLog(icon,'<b>'+name+'</b>: '+player+' — '+human(secs)+' ('+reason+')');
+    btn.disabled=false;btn.textContent='Применить действие';
+  },900);
+}
+
+function addLog(ic,txt){
+  logCount++;
+  var log=document.getElementById('log');
+  if(logCount===1)log.innerHTML='';
+  var div=document.createElement('div');
+  div.className='log-item';
+  div.innerHTML='<span class="log-ic">'+ic+'</span><span class="log-txt">'+txt+'</span>'+
+                '<span class="log-time">'+now()+'</span>';
+  log.prepend(div);
+}
+</script>
+</body>
+</html>
