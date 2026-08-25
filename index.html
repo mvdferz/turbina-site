@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TURBINA TURISTA 18+ · CS:S Public Server</title>
+<meta name="description" content="[v34] TURBINA TURISTA [Public] 18+ — легендарный Counter-Strike: Source сервер. Онлайн 24/7, без донатных имб. Заходи!">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;800;900&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{--hot:#ff4d00;--ember:#ff9a3c;--bone:#efe6da;--dim:#93826f}
@@ -21,7 +22,6 @@ animation:lp 1.4s ease-in-out infinite}
 
 .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
 
-/* ── HERO ── */
 .hero{min-height:92vh;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:60px 20px 40px}
 .badge-top{display:inline-flex;align-items:center;gap:8px;margin:0 auto 26px;padding:9px 22px;border-radius:99px;
 border:1px solid rgba(255,77,0,.4);background:rgba(255,77,0,.07);
@@ -31,14 +31,12 @@ h1 em{font-style:normal;color:var(--hot);text-shadow:0 0 44px rgba(255,77,0,.6)}
 .sub{margin-top:18px;color:var(--dim);font-size:clamp(13px,2.5vw,16px);max-width:520px;margin-left:auto;margin-right:auto}
 .sub b{color:var(--bone)}
 
-/* ── СЕКЦИЯ ОНЛАЙН ── */
 .sec-label{font-family:'Unbounded';font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
-.sec-num{font-family:'Unbounded';font-weight:300;font-size:10px;color:rgba(147,130,111,.55);letter-spacing:.2em}
 #onl{padding:70px 0 30px;text-align:center}
 .big-count{font-family:'Unbounded';font-weight:900;font-size:clamp(64px,16vw,150px);line-height:1;
 background:linear-gradient(180deg,#fff 15%,var(--hot));-webkit-background-clip:text;background-clip:text;color:transparent;
 filter:drop-shadow(0 0 32px rgba(255,77,0,.35))}
-.big-count small{font-size:.32em;font-weight:500;color:var(--dim);-webkit-text-fill-color:var(--dim)}
+.big-count small{font-size:.32em;font-weight:500;-webkit-text-fill-color:var(--dim);color:var(--dim)}
 .gauge{max-width:420px;height:7px;border-radius:99px;background:rgba(232,221,208,.12);margin:26px auto 10px;overflow:hidden}
 .gauge i{display:block;height:100%;width:0;border-radius:99px;
 background:linear-gradient(90deg,var(--hot),var(--ember));
@@ -57,7 +55,6 @@ border:none;cursor:pointer;transition:.25s}
 box-shadow:0 0 10px #4ade80;animation:blink 1.6s infinite;vertical-align:middle}
 @keyframes blink{50%{opacity:.25}}
 
-/* ── КНОПКИ ── */
 .cta{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:50px 0 80px}
 .cta a{flex:1 1 230px;max-width:280px;text-decoration:none;padding:19px 20px;border-radius:18px;text-align:center;
 font-family:'Unbounded';font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;transition:.25s}
@@ -102,10 +99,12 @@ footer b{color:var(--hot)}
 </section>
 
 <section class="cta wrap">
+
 <a class="c-hot" href="steam://connect/46.174.50.240:27015">▶ Играть сейчас</a>
 <a class="c-line" href="players.html">👥 Таблица игроков онлайн</a>
-<a class="c-line" href="https://vk.me/join/ВАША_ССЫЛКА" target="_blank">💬 Сообщество VK</a>
-<a class="c-line" href="https://vk.me/join/ВАША_ССЫЛКА_БЕСЕДА" target="_blank">🗣 Беседа VK</a>
+<a class="c-line" href="https://vk.com/game_2r_2r" target="_blank">💬 Сообщество VK</a>
+<a class="c-line" href="https://vk.me/join/AZQ1d5GqGxNu8kbUvSc03yqF" target="_blank">🗣 Беседа VK</a>
+
 </section>
 
 <footer>Turbina Turista <b>18+</b> · сделано с огнём 🔥</footer>
@@ -126,7 +125,6 @@ function setOnline(n){
  document.getElementById('btnPlayers').textContent='👥 Все игроки онлайн ['+n+' чел] →';
 }
 
-/* честный счёт: только реальные игроки без ботов */
 function loadCount(){
  fetch(WORKER+'?board=1',{cache:'no-store'})
  .then(function(r){return r.json()})
@@ -139,3 +137,4 @@ setInterval(loadCount,30000);
 </script>
 </body>
 </html>
+
