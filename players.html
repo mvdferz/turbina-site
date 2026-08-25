@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Игроки онлайн · TURBINA TURISTA 18+</title>
+<meta name="description" content="Живая таблица игроков сервера [v34] TURBINA TURISTA [Public] 18+ — фраги, время игры, обновление каждые 30 секунд.">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;800;900&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{--hot:#ff4d00;--ember:#ff9a3c;--bone:#efe6da;--dim:#93826f}
@@ -50,7 +51,7 @@ tbody tr{transition:.15s}
 tbody tr:hover{background:rgba(255,77,0,.09)}
 .pos{font-family:'Unbounded';font-weight:800;font-size:13px;width:46px}
 .p1 .pos{color:#ffd700}.p2 .pos{color:#c0c0c0}.p3 .pos{color:#cd7f32}
-.nick{font-weight:800}
+.nick{font-weight:800;word-break:break-word}
 .spec{color:#6b5d4d!important;font-style:italic}
 .sc{font-family:'Unbounded';font-weight:800;color:var(--hot)}
 .tm{color:var(--dim)}
@@ -101,12 +102,14 @@ setTimeout(function(){l.style.display='none'},400)}},700);
 
 function fmt(t){
  if(!t)return '—';
- var spec=t.indexOf('-')===0;
- return spec?'спектатор 👁':t.split(':').slice(0,2).join(':');
+ if(t.indexOf('-')===0)return 'спектатор 👁';
+ return t.split(':').slice(0,2).join(':');
 }
 
 function load(){
- fetch(WORKER+'?board=1',{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+ fetch(WORKER+'?board=1',{cache:'no-store'})
+ .then(function(r){return r.json()})
+ .then(function(d){
    var ps=(d.players||[]).slice().sort(function(a,b){return b.score-a.score});
    document.getElementById('stOnline').textContent=ps.length;
    var b=document.getElementById('pBody');
@@ -118,23 +121,28 @@ function load(){
    document.getElementById('stTop').textContent=ps[0].score+' фр.';
    b.innerHTML=ps.map(function(p,i){
      var spec=/^-/.test(p.time||'');
+     var medal=i<3?['🥇','🥈','🥉'][i]:i+1;
      return '<tr class="'+(i<3?'p'+(i+1):'')+'">'+
-       '<td class="pos">'+['🥇','🥈','🥉'][i]||(i+1)+'</td>'.replace(/^.*$/,'<td class="pos">'+(i<3?['🥇','🥈','🥉'][i]:i+1)+'</td>')+
+       '<td class="pos">'+medal+'</td>'+
        '<td class="nick'+(spec?' spec':'')+'">'+String(p.name).replace(/</g,'&lt;')+(spec?' 👁':'')+'</td>'+
        '<td class="sc">'+p.score+'</td>'+
        '<td class="tm">'+fmt(p.time)+'</td></tr>';
    }).join('');
- }).catch(function(){
+ })
+ .catch(function(){
    document.getElementById('pBody').innerHTML=
      '<tr><td colspan="4" class="empty">Не удалось загрузить данные 😕</td></tr>';
  });
 }
 
 /* карта из основного ответа воркера */
-fetch(WORKER).then(function(r){return r.text()}).then(function(t){
- var m=t.match(/de_[a-z0-9_]+|[a-z]{2,6}_[a-z0-9_]{3,}/i);
- if(m)document.getElementById('stMap').textContent=m[0];
-}).catch(function(){});
+fetch(WORKER,{cache:'no-store'})
+.then(function(r){return r.text()})
+.then(function(t){
+  var m=t.match(/de_[a-z0-9_]+/i);
+  if(m)document.getElementById('stMap').textContent=m[0];
+})
+.catch(function(){});
 
 load();
 setInterval(load,30000);
